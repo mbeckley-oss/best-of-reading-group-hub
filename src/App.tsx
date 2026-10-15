@@ -164,17 +164,17 @@ const INITIAL_TAB_RULES: TabAccessRule[] = [
     tabId: 'appsscript',
     tabLabel: 'Apps Script Backend',
     iconName: 'Code',
-    minRole: 'GENRE_LEAD',
+    minRole: 'COORDINATOR_ADMIN',
     description: 'Backend script source code, automated snapshot triggers, and Google Sheet integration handlers.',
-    allowedRoles: ['GENRE_LEAD', 'COORDINATOR_ADMIN'],
+    allowedRoles: ['COORDINATOR_ADMIN'],
   },
   {
     tabId: 'permissions',
     tabLabel: 'Access & Permissions',
     iconName: 'ShieldCheck',
-    minRole: 'READER',
+    minRole: 'COORDINATOR_ADMIN',
     description: 'Role-based access matrix, tab restriction management, and Google Workspace security mapping.',
-    allowedRoles: ['READER', 'GENRE_LEAD', 'COORDINATOR_ADMIN'],
+    allowedRoles: ['COORDINATOR_ADMIN'],
   },
 ];
 
@@ -439,6 +439,24 @@ export default function App() {
     return rule.allowedRoles.includes(currentPersona.role);
   };
 
+  // Auto-redirect to first accessible tab if activeTab is not allowed for current persona
+  useEffect(() => {
+    if (!checkTabAccess(activeTab)) {
+      const preferredTabOrder: AppTabId[] = [
+        'dashboard',
+        'my_reading',
+        'form',
+        'sheet',
+        'nudges',
+        'gtech',
+        'appsscript',
+        'permissions',
+      ];
+      const nextAllowed = preferredTabOrder.find((t) => checkTabAccess(t)) || 'my_reading';
+      setActiveTab(nextAllowed);
+    }
+  }, [currentPersona, tabRules, activeTab]);
+
   const handleToggleTabRole = (tabId: AppTabId, role: UserRole) => {
     setTabRules((prev) =>
       prev.map((rule) => {
@@ -528,84 +546,77 @@ export default function App() {
                 <ChevronDown className="w-3.5 h-3.5 text-stone-500 absolute right-2.5 top-3 pointer-events-none" />
               </div>
 
-              <button
-                onClick={() => setActiveTab('permissions')}
-                className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border cursor-pointer ${
-                  activeTab === 'permissions'
-                    ? 'bg-amber-900 text-amber-50 border-amber-950 shadow-sm'
-                    : 'bg-white hover:bg-[#F7F3EC] text-stone-700 border-[#DDD5C7]'
-                }`}
-                title="View and configure Access Levels"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />
-                <span className="hidden md:inline">Access Levels</span>
-              </button>
+              {/* Access Levels Header Button - Visible only to Coordinator Admins */}
+              {checkTabAccess('permissions') && (
+                <button
+                  onClick={() => setActiveTab('permissions')}
+                  className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all border cursor-pointer ${
+                    activeTab === 'permissions'
+                      ? 'bg-amber-900 text-amber-50 border-amber-950 shadow-sm'
+                      : 'bg-white hover:bg-[#F7F3EC] text-stone-700 border-[#DDD5C7]'
+                  }`}
+                  title="View and configure Access Levels"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-700" />
+                  <span className="hidden md:inline">Access Levels</span>
+                </button>
+              )}
             </div>
           </div>
 
-          {/* Navigation Tabs with Lock Status Badges */}
-          <div className="flex space-x-1 overflow-x-auto border-t border-slate-100 py-1.5">
-            {/* 1. Dashboard Tab */}
-            {(() => {
-              const allowed = checkTabAccess('dashboard');
-              return (
-                <button
-                  onClick={() => setActiveTab('dashboard')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
-                    activeTab === 'dashboard'
-                      ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  <BarChart3 className="w-4 h-4 text-blue-600" />
-                  Genre Lead Dashboard
-                  {!allowed && <Lock className="w-3 h-3 text-rose-500" />}
-                  {underReadCount > 0 && (
-                    <span className="bg-amber-100 text-amber-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
-                      {underReadCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })()}
+          {/* Navigation Tabs - Dynamically Hidden Based on Access Control */}
+          <div className="flex space-x-1.5 overflow-x-auto border-t border-[#EAE2D5] py-2">
+            {/* 1. Dashboard Tab - Visible only to Genre Leads and Admins */}
+            {checkTabAccess('dashboard') && (
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                  activeTab === 'dashboard'
+                    ? 'bg-[#F5EFE6] text-amber-950 font-bold border border-[#D5C7B3] shadow-2xs'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-[#F7F3EC]'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4 text-blue-600" />
+                <span>Genre Lead Dashboard</span>
+                {underReadCount > 0 && (
+                  <span className="bg-amber-100 text-amber-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                    {underReadCount}
+                  </span>
+                )}
+              </button>
+            )}
 
-            {/* 2. Reader Form Tab */}
-            {(() => {
-              const allowed = checkTabAccess('form');
-              return (
-                <button
-                  onClick={() => setActiveTab('form')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
-                    activeTab === 'form'
-                      ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  <Sparkles className="w-4 h-4 text-amber-500" />
-                  Reader Form (Intake)
-                  {!allowed && <Lock className="w-3 h-3 text-rose-500" />}
-                </button>
-              );
-            })()}
+            {/* 2. Reader Form Tab - Available to Readers, Leads, Admins */}
+            {checkTabAccess('form') && (
+              <button
+                onClick={() => setActiveTab('form')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                  activeTab === 'form'
+                    ? 'bg-[#F5EFE6] text-amber-950 font-bold border border-[#D5C7B3] shadow-2xs'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-[#F7F3EC]'
+                }`}
+              >
+                <Sparkles className="w-4 h-4 text-amber-600" />
+                <span>Reader Form (Intake)</span>
+              </button>
+            )}
 
-            {/* 3. My Reading Hub (Email-Restricted Personal Tab) */}
-            {(() => {
-              const allowed = checkTabAccess('my_reading');
-              const myCount = readerLogs.filter(l => l.submitterEmail.toLowerCase() === currentPersona.email.toLowerCase()).length;
+            {/* 3. My Reading Hub - Available to Readers, Leads, Admins */}
+            {checkTabAccess('my_reading') && (() => {
+              const myCount = readerLogs.filter((l) => l.submitterEmail.toLowerCase() === currentPersona.email.toLowerCase()).length;
               return (
                 <button
                   onClick={() => setActiveTab('my_reading')}
                   className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
                     activeTab === 'my_reading'
-                      ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                      ? 'bg-[#F5EFE6] text-amber-950 font-bold border border-[#D5C7B3] shadow-2xs'
+                      : 'text-stone-600 hover:text-stone-900 hover:bg-[#F7F3EC]'
                   }`}
                 >
                   <BookMarked className="w-4 h-4 text-indigo-600" />
-                  My Reading Hub
-                  {!allowed && <Lock className="w-3 h-3 text-rose-500" />}
+                  <span>My Reading Hub</span>
                   {myCount > 0 && (
-                    <span className="bg-indigo-100 text-indigo-800 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                    <span className="bg-amber-100 text-amber-900 text-[10px] px-1.5 py-0.2 rounded-full font-bold">
                       {myCount}
                     </span>
                   )}
@@ -613,99 +624,85 @@ export default function App() {
               );
             })()}
 
-            {/* 3. Central Google Sheet Tab */}
-            {(() => {
-              const allowed = checkTabAccess('sheet');
-              return (
-                <button
-                  onClick={() => setActiveTab('sheet')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
-                    activeTab === 'sheet'
-                      ? 'bg-emerald-50 text-emerald-800 font-bold border border-emerald-200 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-                  Central Google Sheet
-                  {!allowed && <Lock className="w-3 h-3 text-rose-500" />}
-                </button>
-              );
-            })()}
+            {/* 4. Central Google Sheet Tab - Visible only to Genre Leads and Admins */}
+            {checkTabAccess('sheet') && (
+              <button
+                onClick={() => setActiveTab('sheet')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                  activeTab === 'sheet'
+                    ? 'bg-[#EAF5EE] text-emerald-950 font-bold border border-emerald-300 shadow-2xs'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-[#F7F3EC]'
+                }`}
+              >
+                <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                <span>Central Google Sheet</span>
+              </button>
+            )}
 
-            {/* 4. Automated Nudges Tab */}
-            {(() => {
-              const allowed = checkTabAccess('nudges');
-              return (
-                <button
-                  onClick={() => setActiveTab('nudges')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
-                    activeTab === 'nudges'
-                      ? 'bg-amber-50 text-amber-800 font-bold border border-amber-200 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  <Mail className="w-4 h-4 text-amber-600" />
-                  Email Bots &amp; Nudges
-                  {!allowed && <Lock className="w-3 h-3 text-rose-500" />}
-                </button>
-              );
-            })()}
+            {/* 5. Automated Nudges Tab - Visible only to Genre Leads and Admins */}
+            {checkTabAccess('nudges') && (
+              <button
+                onClick={() => setActiveTab('nudges')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                  activeTab === 'nudges'
+                    ? 'bg-[#FDF3E7] text-amber-900 font-bold border border-amber-300 shadow-2xs'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-[#F7F3EC]'
+                }`}
+              >
+                <Mail className="w-4 h-4 text-amber-600" />
+                <span>Email Bots &amp; Nudges</span>
+              </button>
+            )}
 
-            {/* 5. gTech Pipeline Tab */}
-            {(() => {
-              const allowed = checkTabAccess('gtech');
-              return (
-                <button
-                  onClick={() => setActiveTab('gtech')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
-                    activeTab === 'gtech'
-                      ? 'bg-blue-50 text-blue-700 font-bold border border-blue-200 shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  <Download className="w-4 h-4 text-blue-600" />
-                  gTech CSV Batch
-                  {!allowed && <Lock className="w-3 h-3 text-rose-500" />}
-                  {pendingBatchCount > 0 && (
-                    <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
-                      {pendingBatchCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })()}
+            {/* 6. gTech Pipeline Tab - Strictly Coordinator Admins */}
+            {checkTabAccess('gtech') && (
+              <button
+                onClick={() => setActiveTab('gtech')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                  activeTab === 'gtech'
+                    ? 'bg-[#F5EFE6] text-amber-950 font-bold border border-[#D5C7B3] shadow-2xs'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-[#F7F3EC]'
+                }`}
+              >
+                <Download className="w-4 h-4 text-blue-600" />
+                <span>gTech CSV Batch</span>
+                {pendingBatchCount > 0 && (
+                  <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                    {pendingBatchCount}
+                  </span>
+                )}
+              </button>
+            )}
 
-            {/* 6. Apps Script Code.gs Tab */}
-            {(() => {
-              const allowed = checkTabAccess('appsscript');
-              return (
-                <button
-                  onClick={() => setActiveTab('appsscript')}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
-                    activeTab === 'appsscript'
-                      ? 'bg-slate-800 text-white font-bold shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                  }`}
-                >
-                  <Code className="w-4 h-4 text-emerald-400" />
-                  Apps Script Backend
-                  {!allowed && <Lock className="w-3 h-3 text-rose-500" />}
-                </button>
-              );
-            })()}
+            {/* 7. Apps Script Code.gs Tab - Strictly Coordinator Admins */}
+            {checkTabAccess('appsscript') && (
+              <button
+                onClick={() => setActiveTab('appsscript')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                  activeTab === 'appsscript'
+                    ? 'bg-stone-800 text-white font-bold shadow-2xs'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-[#F7F3EC]'
+                }`}
+              >
+                <Code className="w-4 h-4 text-emerald-400" />
+                <span>Apps Script Backend</span>
+              </button>
+            )}
 
-            {/* 7. Permissions & Access Control Tab */}
-            <button
-              onClick={() => setActiveTab('permissions')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
-                activeTab === 'permissions'
-                  ? 'bg-indigo-50 text-indigo-700 font-bold border border-indigo-200 shadow-2xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <ShieldCheck className="w-4 h-4 text-indigo-600" />
-              Access &amp; Permissions
-            </button>
+            {/* 8. Permissions & Access Control Tab - Visible only to Coordinator Admins */}
+            {checkTabAccess('permissions') && (
+              <button
+                onClick={() => setActiveTab('permissions')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-2 shrink-0 cursor-pointer ${
+                  activeTab === 'permissions'
+                    ? 'bg-amber-900 text-amber-50 font-bold border border-amber-950 shadow-2xs'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-[#F7F3EC]'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4 text-amber-700" />
+                <span>Access &amp; Permissions</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -759,7 +756,7 @@ export default function App() {
                 allLogs={readerLogs}
                 onUpdateLog={handleUpdateLog}
                 onNavigateToForm={() => setActiveTab('form')}
-                onNavigateToSheet={() => setActiveTab('sheet')}
+                onNavigateToSheet={checkTabAccess('sheet') ? () => setActiveTab('sheet') : undefined}
                 lastSyncEvent={lastSyncEvent}
                 syncHistory={syncHistory}
               />
