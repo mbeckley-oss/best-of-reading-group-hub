@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-serif {
+    font-family: 'Newsreader', 'Lora', Georgia, Cambria, serif;
+  }
+  .font-literary {
+    font-family: 'Newsreader', 'Lora', Georgia, serif;
+    letter-spacing: -0.01em;
+  }
+  .font-display {
+    font-family: 'Cinzel', 'Newsreader', Georgia, serif;
+    letter-spacing: 0.04em;
+  }
+
+  /* Realistic Hardcover Book Texture & Shadow */
+  .book-cover-3d {
+    position: relative;
+    box-shadow: 
+      -4px 4px 10px rgba(0, 0, 0, 0.25),
+      -1px 1px 2px rgba(0, 0, 0, 0.15),
+      0 12px 24px -6px rgba(44, 24, 16, 0.2);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .book-cover-3d:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 
+      -6px 8px 16px rgba(0, 0, 0, 0.28),
+      -2px 2px 4px rgba(0, 0, 0, 0.18),
+      0 16px 32px -8px rgba(44, 24, 16, 0.25);
+  }
+
+  /* Left Book Spine Gutter Highlight */
+  .book-spine-gutter {
+    box-shadow: inset 4px 0 6px -1px rgba(0, 0, 0, 0.45), inset -2px 0 4px -1px rgba(255, 255, 255, 0.2);
+  }
+
+  /* Bookmark Ribbon styling */
+  .ribbon-tag {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 6px), 0 100%);
+  }
+
+  /* Parchment warm paper */
+  .bg-parchment {
+    background-color: #FAF8F5;
+  }
+  .bg-parchment-card {
+    background-color: #FFFDF9;
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "name": "Best Of Reading Group Hub",
+  "description": "Automated Google Workspace system replacing AppSheet for the Best Of Reading Group with Gemini-powered Play Books metadata parsing, reader cap enforcement, lead analytics, automated nudges, and gTech fulfillment.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
